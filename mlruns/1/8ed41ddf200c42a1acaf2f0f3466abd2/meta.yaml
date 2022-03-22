@@ -1,0 +1,15 @@
+artifact_uri: file:///home/mlops/airflow/dags/etl_scripts/mlruns/1/8ed41ddf200c42a1acaf2f0f3466abd2/artifacts
+end_time: 1647988490594
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: deleted
+name: ''
+run_id: 8ed41ddf200c42a1acaf2f0f3466abd2
+run_uuid: 8ed41ddf200c42a1acaf2f0f3466abd2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1647988490292
+status: 3
+tags: []
+user_id: mlops

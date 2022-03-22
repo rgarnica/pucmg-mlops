@@ -1,0 +1,4 @@
+artifact_location: file:///home/mlops/airflow/dags/etl_scripts/mlruns/0
+experiment_id: '0'
+lifecycle_stage: active
+name: iris-algo1
