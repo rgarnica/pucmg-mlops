@@ -5,10 +5,11 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python_operator import PythonOperator
 
-pathScript = "/root/airflow/dags/etl_scripts"
-pathIris =  "/root/airflow/dags/etl_scripts/featurestore/iris.txt"
-pathEncoder = "/root/airflow/dags/etl_scripts/featurestore/irisEncoder.txt"
-
+pathScript = "/home/mlops/airflow/dags/etl_scripts"
+pathIris =  "/home/mlops/airflow/dags/etl_scripts/featurestore/iris.txt"
+pathEncoder = "/home/mlops/airflow/dags/etl_scripts/featurestore/irisEncoder.txt"
+pathCleanIris =  "/home/mlops/airflow/dags/etl_scripts/featurestore/clean_iris.txt"
+pathErrors =  "/home/mlops/airflow/dags/etl_scripts/featurestore/error_iris.txt"
 
 def print_context1(ds, **kwargs):
     print(kwargs)
@@ -39,7 +40,7 @@ def task_failure_alert(context):
         )
     #send_email_smtp(dag_vars["dev_mailing_list"], subject, html_content)
     print(subject, html_content)
-    text_file = open("/Users/jeanalves/airflow/dags/etl_scripts/erro.txt", "w")
+    text_file = open("/home/mlops/airflow/dags/etl_scripts/erro.txt", "w")
     n = text_file.write(subject + html_content)
     text_file.close()
 
@@ -82,18 +83,35 @@ with DAG(
             python etl_preprocessing.py {1} {2}
             """.format(pathScript, pathIris, pathEncoder)
         )
-        t3 = PythonOperator(
-            task_id='print_the_context1',
-            provide_context=True,
-            python_callable=print_context1,
-            dag=dag)
-        t4 = PythonOperator(
-            task_id='print_the_context2',
-            provide_context=True,
-            python_callable=print_context2,
-            dag=dag)
-        [[t2,t3] >> t4]
+        t3 = BashOperator(
+            task_id='validate_dataset',
+            bash_command="""
+            cd {0}
+            python validate_dataset.py {1} {2} {3}
+            """.format(pathScript, pathEncoder, pathCleanIris, pathErrors),
+            dag=dag
+        )
+        [t2 >> t3]
+    
+    with TaskGroup("processing", tooltip="processing") as processing:
+        t4 = BashOperator(
+            dag=dag,
+            task_id='first_algorithm',
+            bash_command="""
+            cd {0}
+            python processing_algo1.py {1}
+            """.format(pathScript, pathCleanIris)
+        )
+        t5 = BashOperator(
+            dag=dag,
+            task_id='second_algorithm',
+            bash_command="""
+            cd {0}
+            python processing_algo2.py {1}
+            """.format(pathScript, pathCleanIris)
+        )
+        [t4, t5]
 
 
     end = DummyOperator(task_id='end')
-    start >> etl >> preProcessing >> end
+    start >> etl >> preProcessing >> processing >> end
