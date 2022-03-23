@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVC
 from urllib.parse import urlparse
 import mlflow
 import mlflow.sklearn
@@ -52,12 +52,12 @@ with mlflow.start_run(experiment_id=idExperiment):
     mlflow.log_param("alpha", alpha)
     mlflow.log_param("l1_ratio", l1_ratio)
     
-    regressor = LinearRegression()
-    regressor.fit(train_x, train_y)
+    classifier = SVC()
+    classifier.fit(train_x, train_y)
 
-    predicted_qualities = regressor.predict(test_x)
+    predictions = classifier.predict(test_x)
 
-    (rmse, mae, r2) = eval_metrics(test_y, predicted_qualities)
+    (rmse, mae, r2) = eval_metrics(test_y, predictions)
 
     mlflow.log_metric("rmse", rmse)
     mlflow.log_metric("r2", r2)
@@ -65,8 +65,8 @@ with mlflow.start_run(experiment_id=idExperiment):
 
     tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
     if tracking_url_type_store != "file":
-        mlflow.sklearn.log_model(regressor, "model", registered_model_name="IrisModel")
+        mlflow.sklearn.log_model(classifier, "model", registered_model_name="IrisModel")
     else:
-        mlflow.sklearn.log_model(regressor, "model")
+        mlflow.sklearn.log_model(classifier, "model")
 
 
