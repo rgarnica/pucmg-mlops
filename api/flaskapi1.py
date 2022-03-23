@@ -1,27 +1,36 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import joblib
 import sys
 
 app = Flask(__name__)
 
-MODEL_LABELS = ['setosa', 'versicolor', 'virginica']
-
+MODEL_LABELS = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
 
 @app.route("/predict",methods=['POST'])
-def hello_world():
+def predict():
 
-    sepal_length = request.args.get('sepal_length', default=5.8, type=float)
-    sepal_width = request.args.get('sepal_width', default=3.0, type=float)
-    petal_length = request.args.get('petal_length', default=3.9, type=float)
-    petal_width = request.args.get('petal_width', default=1.2, type=float)
+    sepal_length = request.form.get('sepal_length', default=None, type=float)
+    sepal_width = request.form.get('sepal_width', default=None, type=float)
+    petal_length = request.form.get('petal_length', default=None, type=float)
+    petal_width = request.form.get('petal_width', default=None, type=float)
+
+    if (sepal_length is None or sepal_width is None or petal_length is None or petal_width is None):
+        response = jsonify(status='error', message='Os parametros sepal_length, sepal_width, petal_length, petal_width sao obrigatorios e precisam ser numericos.')
+        response.status_code = 400
+        return response
 
     model = joblib.load('model.pkl')
     features = [[sepal_length, sepal_width, petal_length, petal_width]]
 
-    label_index = model.predict(features)
-    label = MODEL_LABELS[label_index[0]]
+    try:
+        label_index = model.predict(features)
+    except Exception as err:
+        response = jsonify(status='error', message='Falha na previsao do modelo. Erro: {}'.format(err))
+        response.status_code = 400
+        return response
 
-    return label
+    label = MODEL_LABELS[label_index[0]]
+    return jsonify(status='complete', label=label)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
